@@ -135,41 +135,39 @@ BingBefore
 BingAfter<-sum(BazaarBing[4,10:12]/3) #Ads
 BingAfter
 
+PerDiffBing<-(1-BingBefore/BingAfter)
+
+PerDiffBing#3% decrease seasonality
+
+
+
 GoogBefore<-sum(BazaarGoog[4,1:9])/9 #Ads
 GoogBefore
 GoogAfter<-sum(BazaarGoog[4,10:12]/3) #No Ads
 GoogAfter
 
+PerDiffGoog<-(1-GoogBefore/GoogAfter)
 
-DiffBefore<-BingBefore-GoogBefore
-DiffBefore
-
-
-DiffAfter<-BingAfter-GoogAfter
-DiffAfter
+PerDiffGoog
 
 
-DiffinDiff<-DiffBefore-DiffAfter
+DiffinDiff<-PerDiffGoog-PerDiffBing
 
 
 DiffinDiff
-
-TotalCost<-.6*19597
-
-AveCPC<-TotalCost/DiffinDiff
-
-ROI<-(2.52-(-AveCPC))/(-AveCPC)
-
-ROI<-ROI*100
-
-ROI
-
 ```
 
 ```{r}
 
+#ROI
 
+allclicks<-sum(BazaarGoog[3,1:9]/9)+sum(BazaarBing[3,1:12]/12)
 
+TotalCost<-allclicks*.6
+
+mynum<-TotalCost*DiffinDiff
+
+mynum
 ```
 
 
