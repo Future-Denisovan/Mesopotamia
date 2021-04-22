@@ -1,0 +1,175 @@
+---
+title: "Homework 1"
+author: "Caleb Aguiar"
+date: "4/20/2021"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE)
+library(readr)
+library(dplyr)
+dt <- read_csv("airfrance.csv")
+
+```
+
+## AirFrance Case
+
+# 1. Comparing Publishers
+
+```{r Compare Publishers}
+
+pubtab<-dt %>% group_by(Publisher.Name) %>% summarise(mean(Clicks),mean(Avg..Cost.per.Click),mean(Trans..Conv...),mean(Total.Cost..Trans.),sum(Total.Cost))
+
+pubtab %>% arrange(desc(`mean(Avg..Cost.per.Click)`))
+
+pubtab %>% arrange(desc(`mean(Trans..Conv...)`))
+
+```
+
+What do we learn from this table? In particular, which publishers should get more funding? For which publishers we should focus on improving the probability of conversion? For publishers we should deploy strategies to reduce CPC?
+
+Yahoo - US and MSN - US perform well in terms of average total cost for a conversion, and they are funded less than Google by an order of magnitude, we should provide them more funding. Overture Global an Overture US have very low conversion rates, and we need to focus on improving the probability of their conversion. Google global on average costs quite a bit per click, has average conversion in reference to other engines, and total cost is quite high, we need to focus on reducing its cost per click.
+
+# 2. Overture Campaigns
+
+```{r Overture Campaigns}
+
+over<- filter(dt , Total.Cost>2000 & Publisher.Name == "Overture - Global"|Total.Cost>2000 & Publisher.Name == "Overture - US")
+
+overtab<- over %>% group_by(Category) %>% summarise(mean(Clicks),mean(Avg..Cost.per.Click), mean(Trans..Conv...),mean(Total.Cost..Trans.),sum(Total.Cost))
+
+overtab %>% arrange(desc(`mean(Total.Cost..Trans.)`))
+```
+
+Ad copy needs to be improved on the "India" with only 1389 average clicks, "romantic" with only 1506 and probably the "internationairfare" and "airlinegeneral" with their 2070 and 2269 average clicks.
+
+The categories that need better landing pages is "romantic"-it doesn't have any conversions and cost $2510, and "internationalairfare" which cost 2620 dollars and only converted one sale with 2000 clicks.
+
+# 3
+
+```{r Broad Match versus Exact Match}
+
+GoogleGlob.Exact<- filter(dt, Match.Type == "Exact" & Publisher.Name == "Google - Global")
+
+GoogleGlobTab.Exact<- GoogleGlob.Exact %>% group_by(Publisher.Name) %>% summarise(mean(Clicks), mean(Avg..Cost.per.Click),mean(Trans..Conv...),mean(Total.Cost..Trans.),sum(Total.Cost))
+
+
+GoogleGlob.Broad<- filter(dt, Match.Type == "Broad" & Publisher.Name == "Google - Global")
+
+GoogleGlobTab.Broad<- GoogleGlob.Broad %>% group_by(Publisher.Name) %>% summarise(mean(Clicks), mean(Avg..Cost.per.Click),mean(Trans..Conv...),mean(Total.Cost..Trans.),sum(Total.Cost))
+
+
+GoogleUS.Exact<- filter(dt, Match.Type == "Exact" & Publisher.Name == "Google - US")
+
+GoogleUSTab.Exact<- GoogleUS.Exact %>% group_by(Publisher.Name) %>% summarise(mean(Clicks), mean(Avg..Cost.per.Click),mean(Trans..Conv...),mean(Total.Cost..Trans.),sum(Total.Cost))
+
+
+
+GoogleUS.Broad<- filter(dt, Match.Type == "Broad" & Publisher.Name == "Google - US")
+
+GoogleUSTab.Broad<- GoogleUS.Broad %>% group_by(Publisher.Name) %>% summarise(mean(Clicks), mean(Avg..Cost.per.Click),mean(Trans..Conv...),mean(Total.Cost..Trans.),sum(Total.Cost))
+
+
+Keyword.Type<-c("Exact","Broad","Exact","Broad")
+
+GoogleAnalysis<- rbind(GoogleGlobTab.Exact,GoogleGlobTab.Broad,GoogleUSTab.Exact,GoogleUSTab.Broad)
+
+GoogleAnalysis<- cbind(Keyword.Type, GoogleAnalysis)
+
+GoogleAnalysis
+```
+It appears that Exact keyword type campaigns Globally is the most effective, and for some reason in the U.S. Exact isn't very effective, and then Broad keyword type campaigns Globally is on average expensive. It appears the most cost effective conversion is Exact Global and Broad in the U.S.
+
+# 4
+
+No, Bob is doing his analysis incorrectly. Endogeneity is the issue, what should be the error in a formula to describe user behavior to predict engagement, is actually being measured as a correlated variable.
+
+#5
+
+```{r}
+
+
+
+Week<-c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)
+Sponsored.Goog<-c(32269,31951,32143,31417,31194,31576,30951,30611,30401,0,0,0)
+Organic.Goog<-c(127876, 128169, 125717, 126264, 123871, 124053, 126105, 123064, 121637, 150188, 148658, 146584)
+
+Sponsored.Bing<-c(3965, 3984, 3960, 3952, 3874, 3932, 3890, 3883, 3843, 3815, 3754, 3754)
+Organic.Bing<-c(15805, 15964, 15815, 15810, 15633, 15797, 15462, 15309, 15499, 15185, 15159, 15036)
+
+BazaarGoog<-rbind(Week, Sponsored.Goog, Organic.Goog)
+
+BazaarBing<-rbind(Week, Sponsored.Bing, Organic.Bing)
+
+BazaarGoog<-data.frame(BazaarGoog)
+
+GoogSum<-Sponsored.Goog+Organic.Goog
+
+BazaarGoog<-rbind(BazaarGoog,GoogSum)
+
+row.names(BazaarGoog)[row.names(BazaarGoog)=="4"]<-"Sum"
+
+BazaarBing<-data.frame(BazaarBing)
+
+
+BingSum<-Sponsored.Bing+Organic.Bing
+
+BazaarBing<-rbind(BazaarBing,BingSum)
+
+row.names(BazaarBing)[row.names(BazaarBing)=="4"]<-"Sum"
+
+BazaarBing
+
+BazaarGoog
+
+```
+
+
+
+```{r}
+
+BingBefore<-sum(BazaarBing[4,1:9])/9 #Ads
+BingBefore
+BingAfter<-sum(BazaarBing[4,10:12]/3) #Ads
+BingAfter
+
+GoogBefore<-sum(BazaarGoog[4,1:9])/9 #Ads
+GoogBefore
+GoogAfter<-sum(BazaarGoog[4,10:12]/3) #No Ads
+GoogAfter
+
+
+DiffBefore<-BingBefore-GoogBefore
+DiffBefore
+
+
+DiffAfter<-BingAfter-GoogAfter
+DiffAfter
+
+
+DiffinDiff<-DiffBefore-DiffAfter
+
+
+DiffinDiff
+
+TotalCost<-.6*19597
+
+AveCPC<-TotalCost/DiffinDiff
+
+ROI<-(2.52-(-AveCPC))/(-AveCPC)
+
+ROI<-ROI*100
+
+ROI
+
+```
+
+```{r}
+
+
+
+```
+
+
